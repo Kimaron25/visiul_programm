@@ -11,7 +11,7 @@ import {
     type User,
     type Book,
     type HasId
-} from './math';
+} from './test-typescript';
 
 describe('createUser', () => {
     it('should create a user with all fields', () => {

@@ -1,11 +1,11 @@
-interface User {
+export interface User {
     id: number;
     name: string;
     email?: string;
     isActive: boolean;
 }
 
-function createUser(id: number, name: string, email?: string, isActive: boolean = true): User {
+export function createUser(id: number, name: string, email?: string, isActive: boolean = true): User {
     return {
         id,
         name,
@@ -14,23 +14,22 @@ function createUser(id: number, name: string, email?: string, isActive: boolean 
     };
 }
 
-type Genre = 'fiction' | 'non-fiction';
+export type Genre = 'fiction' | 'non-fiction';
 
-interface Book {
+export interface Book {
     title: string;
     author: string;
     year?: number;
     genre: Genre;
 }
 
-function createBook(book: Book): Book {
+export function createBook(book: Book): Book {
     return book;
 }
 
-
-function calculateArea(shape: 'circle', radius: number): number;
-function calculateArea(shape: 'square', side: number): number;
-function calculateArea(shape: 'circle' | 'square', param: number): number {
+export function calculateArea(shape: 'circle', radius: number): number;
+export function calculateArea(shape: 'square', side: number): number;
+export function calculateArea(shape: 'circle' | 'square', param: number): number {
     if (shape === 'circle') {
         return Math.PI * param * param;
     } else {
@@ -38,10 +37,9 @@ function calculateArea(shape: 'circle' | 'square', param: number): number {
     }
 }
 
+export type Status = 'active' | 'inactive' | 'new';
 
-type Status = 'active' | 'inactive' | 'new';
-
-function getStatusColor(status: Status): string {
+export function getStatusColor(status: Status): string {
     switch(status) {
         case 'active':
             return 'green';
@@ -52,40 +50,34 @@ function getStatusColor(status: Status): string {
     }
 }
 
-type StringFormatter = (str: string, uppercase?: boolean) => string;
+export type StringFormatter = (str: string, uppercase?: boolean) => string;
 
-const capitalizeFirstLetter: StringFormatter = (str, uppercase = false) => {
+export const capitalizeFirstLetter: StringFormatter = (str, uppercase = false) => {
     let result = str.charAt(0).toUpperCase() + str.slice(1);
     if (uppercase) {
-        
         return result.toUpperCase();
     }
     return result;
 };
 
-
-const trimAndFormat: StringFormatter = (str, uppercase = false) => {
-    let result = str.trim();  
+export const trimAndFormat: StringFormatter = (str, uppercase = false) => {
+    let result = str.trim();
     if (uppercase) {
-        
         return result.toUpperCase();
     }
     return result;
 };
 
-
-function getFirstElement<T>(arr: T[]): T | undefined {
+export function getFirstElement<T>(arr: T[]): T | undefined {
     return arr.length > 0 ? arr[0] : undefined;
 }
 
-
-interface HasId {
+export interface HasId {
     id: number;
 }
 
-function findById<T extends HasId>(items: T[], id: number): T | undefined {
-    
-    for (var i = 0; i < items.length; i++) {
+export function findById<T extends HasId>(items: T[], id: number): T | undefined {
+    for (let i = 0; i < items.length; i++) {
         if (items[i].id === id) {
             return items[i];
         }
