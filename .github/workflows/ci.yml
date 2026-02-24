@@ -2,7 +2,7 @@ name: Typescript CI
 
 on:
   push:
-    branches: [ master, lab1 ]
+    branches: [ master, lab1, lab3 ] 
   pull_request:
     branches: [ master ]
 
