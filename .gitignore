@@ -1,0 +1,52 @@
+# .gitignore для SimpleComputer проекта
+
+# Исполняемые файлы (по ТЗ они в тех же папках, что и исходники)
+simplecomputer        
+simpleassembler/simpleassembler 
+simplebasic/simplebasic          
+
+# Объектные файлы и временные файлы сборки
+*.o
+*.obj
+*.so
+*.a
+*.lib
+*.dll
+*.exe
+
+# Папки сборки
+obj/
+build/
+dist/
+out/
+bin/                    
+*.exe.dSYM/            
+
+# Файлы IDE и редакторов
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Файлы операционной системы
+.DS_Store
+Thumbs.db
+
+# Логи и временные файлы
+*.log
+*.tmp
+*.temp
+
+# Файлы покрытия кода
+*.gcda
+*.gcno
+*.gcov
+
+# Резервные копии
+*.bak
+*.backup
+
+# Документация (если генерируется)
+docs/_build/
+node_modules/.vite/
