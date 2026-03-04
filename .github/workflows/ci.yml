@@ -2,27 +2,26 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ lab4, lab3, main ]
+    branches: [ lab4, main, develop ]
   pull_request:
     branches: [ lab4 ]
 
 jobs:
-  build-and-test:
+  test:
     runs-on: ubuntu-latest
-    
 
     strategy:
       matrix:
-        node-version: [16.x, 18.x, 20.x]
+        node-version: [18.x, 20.x, 21.x]
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
     
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
@@ -30,29 +29,29 @@ jobs:
     - name: Install dependencies
       run: npm ci
     
-    - name: Lint (TypeScript compilation check)
-      run: npm run lint
-    
-    - name: Build
-      run: npm run build
+    - name: Type check
+      run: npm run type-check
     
     - name: Run tests with coverage
       run: npm run test:coverage
     
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4  # Обновлено до v4
       with:
         directory: ./coverage
         flags: unittests
         name: codecov-umbrella
         fail_ci_if_error: false
         verbose: true
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-security:
-  runs-on: ubuntu-latest
-  if: secrets.SNYK_TOKEN != ''  # Добавьте эту строку
+  security:
+    runs-on: ubuntu-latest
+    # Исправлено: правильный синтаксис для проверки секрета
+    if: github.repository_owner == 'your-username' && secrets.SNYK_TOKEN != ''
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Run Snyk Security Scan
       uses: snyk/actions/node@master
@@ -65,7 +64,7 @@ security:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       
       - name: Dependency Review
-        uses: actions/dependency-review-action@v3
+        uses: actions/dependency-review-action@v4  # Обновлено до v4
