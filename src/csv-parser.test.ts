@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { csvToJSON, formatCSVFileToJSONFile } from './csv-parser';
 import { readFile, writeFile } from 'node:fs/promises';
 
-// Мокаем модуль fs/promises
 vi.mock('node:fs/promises');
 
 describe('csvToJSON', () => {

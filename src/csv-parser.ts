@@ -44,7 +44,7 @@ export function csvToJSON(input: string[], delimiter: string): object[] {
             const header = headers[j].trim();
             let value: string | number = values[j].trim();
             
-            // Пытаемся преобразовать в число, если это возможно
+            //преобразование в число
             if (/^-?\d+$/.test(value)) {
                 value = parseInt(value, 10);
             } else if (/^-?\d+\.\d+$/.test(value)) {
