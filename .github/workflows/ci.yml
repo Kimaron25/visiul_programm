@@ -9,6 +9,7 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    
 
     strategy:
       matrix:
@@ -47,8 +48,9 @@ jobs:
         fail_ci_if_error: false
         verbose: true
 
-  security:
-    runs-on: ubuntu-latest
+security:
+  runs-on: ubuntu-latest
+  if: secrets.SNYK_TOKEN != ''  # Добавьте эту строку
     steps:
     - uses: actions/checkout@v3
     
