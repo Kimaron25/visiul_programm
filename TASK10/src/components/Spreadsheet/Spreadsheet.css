@@ -1,0 +1,189 @@
+.spreadsheet-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  position: relative;
+}
+
+.spreadsheet-header {
+  display: flex;
+  position: sticky;
+  top: 0;
+  background: #f1f3f5;
+  z-index: 10;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.spreadsheet-corner-cell {
+  width: 40px;
+  min-width: 40px;
+  height: 30px;
+  border-right: 1px solid #dee2e6;
+  border-bottom: 1px solid #dee2e6;
+  background: #e9ecef;
+  flex-shrink: 0;
+}
+
+.spreadsheet-col-header {
+  width: 100px;
+  min-width: 100px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid #dee2e6;
+  border-bottom: 1px solid #dee2e6;
+  background: #e9ecef;
+  font-weight: 600;
+  font-size: 14px;
+  color: #495057;
+  position: relative;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.spreadsheet-body {
+  background: white;
+  overflow: auto;
+  max-height: 600px;
+  scrollbar-width: thin;
+}
+
+.spreadsheet-row {
+  display: flex;
+  min-width: max-content;
+}
+
+.spreadsheet-row-header {
+  width: 40px;
+  min-width: 40px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid #dee2e6;
+  border-bottom: 1px solid #dee2e6;
+  background: #f8f9fa;
+  font-size: 12px;
+  color: #868e96;
+  flex-shrink: 0;
+}
+
+.spreadsheet-cell {
+  width: 100px;
+  min-width: 100px;
+  height: 30px;
+  border-right: 1px solid #dee2e6;
+  border-bottom: 1px solid #dee2e6;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.spreadsheet-cell.selected {
+  border: 2px solid #4263eb;
+  background: #e7f5ff;
+}
+
+.spreadsheet-cell-content {
+  padding: 4px 8px;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spreadsheet-cell-input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  padding: 4px 8px;
+  font-size: 14px;
+  background: white;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.col-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 10;
+}
+
+.col-resize-handle:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.spreadsheet-cell.range-selected {
+  background-color: rgba(66, 99, 235, 0.15);
+}
+
+.spreadsheet-cell.selected {
+  background-color: rgba(66, 99, 235, 0.3);
+  border: 2px solid #4263eb;
+}
+
+.spreadsheet-cell.selected.range-selected {
+  background-color: rgba(66, 99, 235, 0.35);
+}
+
+.formula-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 8px 16px;
+  margin-bottom: 20px;
+}
+
+.formula-bar-label {
+  font-weight: 700;
+  font-size: 18px;
+  color: #4263eb;
+  background: #e7f5ff;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.formula-bar-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  font-family: 'SF Mono', monospace;
+  padding: 0 8px;
+}
+
+.virtualization-indicator {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #4ade80;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-family: monospace;
+  z-index: 9999;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+}

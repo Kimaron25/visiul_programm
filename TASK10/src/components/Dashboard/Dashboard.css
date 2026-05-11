@@ -1,0 +1,213 @@
+.dashboard {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.dashboard-header h1 {
+    font-size: 28px;
+    color: #212529;
+}
+
+.create-button {
+    background: rgb(31, 31, 31);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: transform 0.2s;
+}
+
+.create-button:hover {
+    transform: translateY(-2px);
+}
+
+.documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.document-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 16px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.document-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.document-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.document-card-header h3 {
+    font-size: 18px;
+    color: #212529;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.document-card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.action-btn.duplicate:hover {
+    background: #e9ecef;
+}
+
+.action-btn.delete:hover {
+    background: #ffe3e3;
+}
+
+.document-card-preview {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 8px;
+    margin-bottom: 12px;
+}
+
+.preview-table {
+    display: inline-block;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.preview-row {
+    display: flex;
+}
+
+.preview-cell {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid #dee2e6;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 12px;
+    color: #495057;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0 4px;
+}
+
+.preview-cell:last-child {
+    border-right: none;
+}
+
+.preview-row:last-child .preview-cell {
+    border-bottom: none;
+}
+
+.document-card-info {
+    font-size: 12px;
+    color: #868e96;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.dashboard-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    gap: 20px;
+}
+
+.dashboard-loading .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e9ecef;
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.dashboard-empty {
+    text-align: center;
+    padding: 60px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.dashboard-empty p {
+    margin-bottom: 20px;
+    color: #868e96;
+}
+
+.dashboard-error {
+    background: #ffe3e3;
+    color: #e03131;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.rename-input {
+    flex: 1;
+    padding: 4px 8px;
+    border: 1px solid #667eea;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    outline: none;
+    background: white;
+}
+
+.document-card-header h3 {
+    cursor: pointer;
+    flex: 1;
+    margin: 0;
+    font-size: 16px;
+}
+
+.document-card-header h3:hover {
+    color: #667eea;
+}
