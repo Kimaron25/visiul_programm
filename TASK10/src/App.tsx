@@ -9,63 +9,121 @@ import { createDocumentWithSize } from './services/documentService';
 import { fetchDocumentsById, updateDocument } from './services/documentService';
 import { exportToCSV, exportToJSON } from './utils/exportUtils';
 import { parseCSV } from './utils/importUtils';
+import { useAppDispatch, useAppSelector } from './store/hooks';
+import { undo, redo } from './store/slices/spreadsheetSlice';
+
+import { 
+    setCreateModalOpen, 
+    setSaveStatus, 
+    setNotification 
+} from './store/slices/uiSlice';
+import { 
+    loadDocuments, 
+    loadDocumentById, 
+    createNewDocument, 
+    saveDocument as saveDocumentThunk,
+    setCurrentDocumentId,
+    setCurrentDocumentData
+} from './store/slices/documentsSlice';
+import { 
+    setData, 
+    setRows, 
+    setCols, 
+    importData 
+} from './store/slices/spreadsheetSlice';
 
 function App() {
- const [current_document_id, set_current_document_id] = useState<string | null>(null);
- const [show_new_document_modal, set_show_new_document_modal] = useState(false);
- const [active_cell_value,set_active_cell_value] = useState('');
- const [active_cell_position,set_active_cell_position] = useState<{ row:number; col: number} | null>(null);
- const [table_data, set_table_data] = useState<TableData>({});
- const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
- const [tableRows, setTableRows] = useState(100);
- const [tableCols, setTableCols] = useState(26);
+//  const [current_document_id, set_current_document_id] = useState<string | null>(null);
+//  const [show_new_document_modal, set_show_new_document_modal] = useState(false);
+//  const [active_cell_value,set_active_cell_value] = useState('');
+//  const [active_cell_position,set_active_cell_position] = useState<{ row:number; col: number} | null>(null);
+//  const [table_data, set_table_data] = useState<TableData>({});
+//  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
+//  const [tableRows, setTableRows] = useState(100);
+//  const [tableCols, setTableCols] = useState(26);
+//  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+ const dispatch = useAppDispatch();
+ const { isCreateModalOpen, saveStatus, notification } = useAppSelector(state=> state.ui);
+ const { currentDocumentId, currentDocumentData} = useAppSelector(state => state.documents);
+ const { data: tableData, rows: tableRows, cols: tableCols } = useAppSelector(state => state.spreadsheet);
  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
- const handleSelectDocument = useCallback(async (id: string) => {
-  try {
-    const doc = await fetchDocumentsById(id);
-    if (doc && doc.data) {
-      set_table_data(doc.data);
-      setTableRows(doc.rows || 100);
-      setTableCols(doc.cols || 26);
-    }
-    set_current_document_id(id);
-  }catch (error) {
-      console.error('Ошибка загрузки документа:', error);
-      alert('Не удалось загрузить документ');
+ useEffect(() => {
+  dispatch(loadDocuments());
+ },[dispatch]);
+ useEffect(() => {
+  if(notification) {
+    alert(notification);
+    dispatch(setNotification(null));
   }
- }, []);
+ }, [notification,dispatch]);
+ const handleSelectDocument = useCallback(async (id: string) => {
+  dispatch(setCurrentDocumentId(id));
+  const result = await dispatch(loadDocumentById(id));
+  if(result.payload) {
+    const payload = result.payload as any;
+    dispatch(setData(payload.data || {}));
+    if(payload.rows) dispatch(setRows(payload.rows));
+    if(payload.cols) dispatch(setCols(payload.cols));
+  }
+  // try {
+  //   const doc = await fetchDocumentsById(id);
+  //   if (doc && doc.data) {
+  //     set_table_data(doc.data);
+  //     setTableRows(doc.rows || 100);
+  //     setTableCols(doc.cols || 26);
+  //   }
+  //   set_current_document_id(id);
+  // }catch (error) {
+  //     console.error('Ошибка загрузки документа:', error);
+  //     alert('Не удалось загрузить документ');
+  // }
+ }, [dispatch]);
 
  const handleCreateNew = () => {
-  set_show_new_document_modal(true);
+  dispatch(setCreateModalOpen(true));
+  // set_show_new_document_modal(true);
  };
 
  const handleBackToDashboard = async() => {
-    if (current_document_id) {
-      setSaveStatus('saving');
+    if (currentDocumentId) {
+      dispatch(setSaveStatus('saving'));
+      // setSaveStatus('saving');
       try {
-        await updateDocument(current_document_id, { data: table_data });
-        const preview = generatePreview(table_data);
-        await updateDocument(current_document_id, { preview });
-        setSaveStatus('saved');
+        await dispatch(saveDocumentThunk({ id: currentDocumentId, data:tableData})).unwrap();
+        dispatch(setSaveStatus('saved'));
+        // await updateDocument(current_document_id, { data: table_data });
+        // const preview = generatePreview(table_data);
+        // await updateDocument(current_document_id, { preview });
+        // setSaveStatus('saved');
       }catch(error) {
-        console.error('Ошибка сохранения перед выходом:', error);
-        setSaveStatus('error');
+        dispatch(setSaveStatus('saved'));
+        dispatch(setNotification('Ошибка сохранения перед выходом:'));
+        // console.error('Ошибка сохранения перед выходом:', error);
+        // setSaveStatus('error');
       }
     }
-  set_current_document_id(null);
+    dispatch(setCurrentDocumentId(null));
+    dispatch(setCurrentDocumentData({}));
  };
  const handleCreateDocument = async(name: string, rows: number, cols: number) =>{
   try {
-    const newDoc = await createDocumentWithSize(name,rows,cols);
-    set_current_document_id(newDoc.id);
-    set_show_new_document_modal(false);
-    set_table_data({});
-    setTableRows(rows);
-    setTableCols(cols);
+    const result = await dispatch(createNewDocument({name,rows, cols})).unwrap();
+    dispatch(setCurrentDocumentId(result.id));
+    dispatch(setRows(rows));
+    dispatch(setCols(cols));
+    dispatch(setData({}));
+    dispatch(setCreateModalOpen(false));
+    // const newDoc = await createDocumentWithSize(name,rows,cols);
+    // set_current_document_id(newDoc.id);
+    // set_show_new_document_modal(false);
+    // set_table_data({});
+    // setTableRows(rows);
+    // setTableCols(cols);
   } catch (error) {
     console.error('Ошибка создания документа:', error);
-    alert('Не удалось создать документ');
+    dispatch(setNotification('Не удалось создать документ'));
+    // alert('Не удалось создать документ');
   }
  };
 
@@ -83,56 +141,66 @@ function App() {
   return preview;
  };
 
- const saveDocument = useCallback(async (data: TableData) => {
-  if (!current_document_id) return;
-    setSaveStatus('saving');
+ const saveDocument = useCallback(async (data: any) => {
+  if (!currentDocumentId) return;
+    dispatch(setSaveStatus('saving'));
+    // setSaveStatus('saving');
     try {
-      console.log('Сохранение документа:', current_document_id, data);
-      await updateDocument(current_document_id, { data });
-      setSaveStatus('saved');
+      // console.log('Сохранение документа:', current_document_id, data);
+      // await updateDocument(current_document_id, { data });
+      // setSaveStatus('saved');
+      // const preview = generatePreview(data);
+      // await updateDocument(current_document_id, { preview });
+      // await dispatch(saveDocumentThunk({id: currentDocumentId,data})).unwrap();
       const preview = generatePreview(data);
-      await updateDocument(current_document_id, { preview });
+      await dispatch(saveDocumentThunk({ id: currentDocumentId,data:data, preview: preview} )).unwrap();
+      dispatch(setSaveStatus('saved'));
     }catch(error) {
-      setSaveStatus('error');
+      dispatch(setSaveStatus('error'));
+      dispatch(setNotification('Ошибка сохранения'));
+      // setSaveStatus('error');
     }
-  }, [current_document_id]);
+  }, [currentDocumentId,dispatch]);
 
  const handleDataChange = useCallback((data: TableData) => {
-  set_table_data(data);
+  dispatch(setData(data));
   if(saveTimeoutRef.current){
     clearTimeout(saveTimeoutRef.current);
   }
   saveTimeoutRef.current=setTimeout(() => {
     saveDocument(data);
   },500);
- }, [saveDocument]);
+ }, [saveDocument , dispatch]);
 
  const handleCellSelect = useCallback((row: number, col:number , value:string) => {
-  set_active_cell_position({row,col});
-  set_active_cell_value(value);
+  // set_active_cell_position({row,col});
+  // set_active_cell_value(value);
  }, []);
 
  const handleFormulChange = useCallback((value:string) => {
-  set_active_cell_value(value);
+  // set_active_cell_value(value);
  }, []);
 
  const handleFormulCommit = useCallback(() => {
+
  },[]);
  const handleExportCSV = () => {
-  exportToCSV(table_data, tableRows, tableCols);
+  exportToCSV(tableData,tableRows,tableCols);
  };
  const handleExportJSON = () => {
-  exportToJSON(table_data);
+  exportToJSON(tableData);
  };
  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const file = e.target.files?.[0];
   if (!file) return;
   const text = await file.text();
   const { data, rows, cols } = parseCSV(text);
-  set_table_data(data);
-  setTableRows(rows);
-  setTableCols(cols);
-  alert(`Импортировано ${rows} строк и ${cols} столбцов`);
+  // set_table_data(data);
+  // setTableRows(rows);
+  // setTableCols(cols);
+  // alert(`Импортировано ${rows} строк и ${cols} столбцов`);
+  dispatch(importData({data,rows,cols}));
+  dispatch(setNotification(`Импортировано ${rows} строк и ${cols} столбцов`));
   e.target.value = '';
  }
 
@@ -140,14 +208,14 @@ function App() {
   const handleCtrlS = (e: KeyboardEvent) => {
     if((e.ctrlKey|| e.metaKey) && e.key === 's'){
       e.preventDefault();
-      if(current_document_id) {
-        saveDocument(table_data);
+      if(currentDocumentId) {
+        saveDocument(tableData);
       }
     }
   };
   window.addEventListener('keydown',handleCtrlS);
   return () => window.removeEventListener('keydown', handleCtrlS);
- }, [current_document_id, table_data, saveDocument]);
+ }, [currentDocumentId, tableData, saveDocument]);
     
  useEffect(() => {
   const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -160,7 +228,25 @@ function App() {
    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [saveStatus]);
 
- if (!current_document_id) {
+  useEffect(()=> {
+    const handleUndoRedo = (e:KeyboardEvent) => {
+      if((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        if(e.shiftKey) {
+          dispatch(redo());
+        } else {
+          dispatch(undo());
+        }
+      }
+      if((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault();
+        dispatch(redo());
+      }
+    };
+    window.addEventListener('keydown', handleUndoRedo);
+    return () => window.removeEventListener('keydown', handleUndoRedo);
+  }, [dispatch]);
+ if (!currentDocumentId) {
   return (
     <>
       <Dashboard 
@@ -168,8 +254,8 @@ function App() {
         onCreateNew={handleCreateNew}
       />
       <CreateDocumentModal
-        isOpen={show_new_document_modal}
-        onClose={() => set_show_new_document_modal(false)}
+        isOpen={isCreateModalOpen}
+        onClose={() => dispatch(setCreateModalOpen(false))}
         onCreate={handleCreateDocument}
       />
     </>
@@ -204,7 +290,7 @@ function App() {
       </div>
       
       <BarFormul
-        value={active_cell_value}
+        value={''}
         on_change={handleFormulChange}
         on_commit={handleFormulCommit}
       />
@@ -213,7 +299,7 @@ function App() {
           key={`${tableRows}-${tableCols}`}
           rows={tableRows}
           cols={tableCols}
-          initialData={table_data}
+          initialData={tableData}
           on_data_change={handleDataChange}   
           on_cell_select={handleCellSelect}
       />

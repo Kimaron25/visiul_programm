@@ -2,6 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { type Document } from '../../types/document';
 import { fetchDocuments, deleteDocument, duplicateDocument, updateDocument } from '../../services/documentService';
 import './Dashboard.css';
+import { 
+    loadDocuments, 
+    removeDocument, 
+    duplicateDocumentThunk,
+    updateDocumentThunk 
+} from '../../store/slices/documentsSlice';
+import { setCreateModalOpen } from '../../store/slices/uiSlice';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
 
 interface DashboardProps {
     onSelectDocument: (id:string) => void;
@@ -9,26 +17,28 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ onSelectDocument, onCreateNew }) =>{
-    const [documents, setDocuments] = useState<Document[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const dispatch = useAppDispatch();
+    const { list: documents, loading, error } = useAppSelector(state => state.documents);
+    // const [documents, setDocuments] = useState<Document[]>([]);
+    // const [loading, setLoading] = useState(true);
+    // const [error, setError] = useState<string | null>(null);
     const [editingDocId, setEditingDocId] = useState<string | null>(null);
     const [editingName, setEditingName] = useState('');
-    const loadDocuments = async () => {
-        try {
-            setLoading(true);
-            const docs = await fetchDocuments();
-            setDocuments(docs);
-            setError(null);
-        } catch(err) {
-            setError('Ошибка загрузки документов');
-        } finally {
-            setLoading(false);
-        }
-    };
+    // const loadDocuments = async () => {
+    //     try {
+    //         setLoading(true);
+    //         const docs = await fetchDocuments();
+    //         setDocuments(docs);
+    //         setError(null);
+    //     } catch(err) {
+    //         setError('Ошибка загрузки документов');
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
     useEffect(() => {
-        loadDocuments();
-    }, []);
+        dispatch(loadDocuments());
+    }, [dispatch]);
 
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
@@ -37,30 +47,34 @@ const Dashboard: React.FC<DashboardProps> = ({ onSelectDocument, onCreateNew }) 
 
     const handleDelete = async(id:string,name: string) => {
         if (window.confirm(`Удалить документ "${name}"?`)) {
-            try {
-                await deleteDocument(id);
-                await loadDocuments();
-            } catch (err) {
-                alert('Ошибка при удалении');
-            }
+            await dispatch(removeDocument(id));
+            // try {
+            //     await deleteDocument(id);
+            //     await loadDocuments();
+            // } catch (err) {
+            //     alert('Ошибка при удалении');
+            // }
         }
     };
     const handleDuplicate =async(id: string) => {
-        try {
-            await duplicateDocument(id);
-            await loadDocuments();
-        } catch (err) {
-            alert('Ошибка при дублировании');
-        }
+        await dispatch(duplicateDocumentThunk(id));
+        // try {
+        //     await duplicateDocument(id);
+        //     await loadDocuments();
+        // } catch (err) {
+        //     alert('Ошибка при дублировании');
+        // }
     };
     const handleRename = async(id: string, newName: string) => {
-    try {
-        await updateDocument(id, { name: newName });
-        await loadDocuments();
+    // try {
+    //     await updateDocument(id, { name: newName });
+    //     await loadDocuments();
+    //     setEditingDocId(null);
+    // }catch (error) {
+    //     alert('Ошибка переименования');
+        if(!newName.trim()) return;
+        await dispatch(updateDocumentThunk({id, name: newName}));
         setEditingDocId(null);
-    }catch (error) {
-        alert('Ошибка переименования');
-    }
     };
     
     if(loading){

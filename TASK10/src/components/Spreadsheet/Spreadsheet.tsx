@@ -2,6 +2,18 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { SpreadSheet, type TableData } from '../../lib/spreadsheet';
 import ContextMenu from './ContextMenu';
 import './Spreadsheet.css';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { 
+    setCellValue, 
+    setRows, 
+    setCols, 
+    setSelectedCell, 
+    setEditingCell, 
+    setEditValue,
+    clearEditing,
+    importData 
+} from '../../store/slices/spreadsheetSlice';
+import { setNotification } from '../../store/slices/uiSlice';
 
 interface SpreadSheetProps {
     rows?: number;
@@ -15,6 +27,8 @@ const ROW_HEIGHT = 30;
 const BUFFER_SIZE = 5;
 
 const Spreadsheet: React.FC<SpreadSheetProps> = ({ rows = 100, cols = 26, initialData,on_data_change, on_cell_select  }) => {
+    const dispatch = useAppDispatch();
+    const { data: tableData , rows: storeRows, cols: storeCols} = useAppSelector(state => state.spreadsheet);
     const [model] = useState(() => {
         const newModel = new SpreadSheet(rows, cols);
         if (initialData && Object.keys(initialData).length > 0) {
@@ -91,10 +105,12 @@ const Spreadsheet: React.FC<SpreadSheetProps> = ({ rows = 100, cols = 26, initia
     const handleCellChange = useCallback((row: number, col: number, value: string) => {
         model.setCell(row, col, value);
         refresh();
+        const cell = model.getCell (row,col);
+        dispatch(setCellValue({row, col, value: cell.value, computedValue: cell.calculetade_value}));
         if (on_data_change) {
             on_data_change(model.getAllData());
         }
-    }, [model, refresh, on_data_change]);
+    }, [model, refresh, on_data_change, dispatch]);
 
     const startEditing = useCallback((row: number, col: number, curren_value: string) => {
         set_editing_cell({ row, col });
