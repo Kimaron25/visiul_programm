@@ -14,6 +14,7 @@ import {
     importData 
 } from '../../store/slices/spreadsheetSlice';
 import { setNotification } from '../../store/slices/uiSlice';
+import { undo, redo } from '../../store/slices/spreadsheetSlice';
 
 interface SpreadSheetProps {
     rows?: number;
@@ -209,6 +210,22 @@ const Spreadsheet: React.FC<SpreadSheetProps> = ({ rows = 100, cols = 26, initia
             };
         }
     }, [resizingColumn, onResize, stopResize]);
+
+    useEffect(() => {
+        const handleUndoRedo = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                dispatch(undo());
+            }
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+                e.preventDefault();
+                dispatch(redo());
+            }
+        };
+        
+        window.addEventListener('keydown', handleUndoRedo);
+        return () => window.removeEventListener('keydown', handleUndoRedo);
+    }, [dispatch]);
 
     const handleContextMenu = useCallback((e: React.MouseEvent, row: number, col: number) => {
         e.preventDefault();

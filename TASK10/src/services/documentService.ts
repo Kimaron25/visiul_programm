@@ -15,15 +15,28 @@ const getCurrentUserId = (): string => {
     return userId;
 };
 
-const getAllDocuments = ():Document[]=>{
+
+const getAllDocumentsRaw = () : Document[] => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    const allDocs = stored?JSON.parse(stored) :[];
+    return stored ? JSON.parse(stored) :[];
+};
+
+const saveAllDocumentsRaw = (docs: Document[]) => {
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(docs));
+}
+
+const getAllDocuments = ():Document[]=>{
+    const allDocs = getAllDocumentsRaw();
     const userId = getCurrentUserId();
-     return allDocs.filter((doc: Document) => doc.id.startsWith(userId));
+    return allDocs.filter((doc: Document) => doc.userId === userId);
 };
 
 const saveAllDocuments = (docs: Document[]) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(docs));
+    const allDocs = getAllDocumentsRaw();
+    const userId = getCurrentUserId();
+    const otherDocs = allDocs.filter((doc: Document) => doc.userId !== userId);
+    const newAllDocs = [...otherDocs, ...docs];
+    saveAllDocumentsRaw(newAllDocs);
 };
 
 const generateId = (): string => {
@@ -46,6 +59,7 @@ export const createDocument = async (t: CreateDocument_t) : Promise<Document> =>
     await delay(500);
     const newDocument: Document = {
         id: generateId(),
+        userId: getCurrentUserId(),
         name: t.name,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -90,13 +104,14 @@ export const duplicateDocument = async (id: string) : Promise<Document> => {
     const newDocument: Document ={
         ...original,
         id: generateId(),
+        userId: getCurrentUserId(),
         name: `${original.name} (копия)`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
     }
-    const docs = getAllDocuments();
+    const docs = getAllDocumentsRaw();
     docs.push(newDocument);
-    saveAllDocuments(docs);
+    saveAllDocumentsRaw(docs);
     return newDocument;
 }
 
@@ -108,6 +123,7 @@ export const createDocumentWithSize = async (
     await delay(500);
     const newDocument: Document = {
         id: generateId(),
+        userId: getCurrentUserId(),
         name: name,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -116,8 +132,8 @@ export const createDocumentWithSize = async (
         cols: cols,
         preview: Array(3).fill(null).map(() => Array(3).fill(''))
     };
-    const docs = getAllDocuments();
+    const docs = getAllDocumentsRaw();
     docs.push(newDocument);
-    saveAllDocuments(docs);
+    saveAllDocumentsRaw(docs);
     return newDocument;
 }

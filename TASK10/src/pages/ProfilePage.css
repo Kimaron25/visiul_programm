@@ -1,0 +1,38 @@
+.profile-page {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.profile-card {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.profile-card h2 {
+    margin-bottom: 24px;
+    color: #212529;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.profile-field {
+    display: flex;
+    padding: 12px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.profile-field label {
+    width: 120px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.profile-field span {
+    color: #212529;
+}
