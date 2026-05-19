@@ -22,13 +22,28 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import { useEffect } from 'react';
 import {setNotification } from './store/slices/uiSlice';
+import { setUser } from './store/slices/authSlice';
 
 setupAxiosInterceptors();
 function AppContent() {
  const dispatch = useAppDispatch();
  const navigate = useNavigate();
  const { isCreateModalOpen, notification  } = useAppSelector(state=> state.ui);
- const { isAuthenticated } = useAppSelector(state => state.auth);
+ const { isAuthenticated , user} = useAppSelector(state => state.auth);
+ useEffect(() => {
+ const savedUserId = localStorage.getItem('spreadsheet_current_user');
+ const savedUserName = localStorage.getItem('spreadsheet_current_user_name');
+ const savedUserEmail = localStorage.getItem('spreadsheet_current_user_email');
+ const savedUserCreatedAt = localStorage.getItem('spreadsheet_current_user_createdAt');
+ if (savedUserId && savedUserName && !user) {
+   dispatch(setUser({
+       id: savedUserId,
+       name: savedUserName,
+       email: savedUserEmail || '',
+       createdAt: savedUserCreatedAt || undefined
+   })); 
+  }
+ }, [dispatch, user]);
  useEffect(() => {
   if (notification) {
     alert(notification);

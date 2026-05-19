@@ -12,7 +12,7 @@ import { exportToCSV, exportToJSON } from '../utils/exportUtils';
 import { parseCSV } from '../utils/importUtils';
 import { type TableData } from '../lib/spreadsheet';
 import './SpreadsheetPage.css';
-
+import FormattingToolbar from '../components/Spreadsheet/FormattingToolbar';
 
 const SpreadsheetPage: React.FC = () => {
     const {documentId} = useParams<{ documentId:string} >();
@@ -22,6 +22,7 @@ const SpreadsheetPage: React.FC = () => {
     const {data: tableData, rows: tableRows, cols: tableCols } = useAppSelector(state => state.spreadsheet);
     const {saveStatus} = useAppSelector(state => state.ui);
     const [activeCellValue, setActiveCellValue] = useState('');
+    const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> |null>(null);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
@@ -107,6 +108,7 @@ const SpreadsheetPage: React.FC = () => {
 
     const handleCellSelect = useCallback((row: number, col: number, value: string) => {
         setActiveCellValue(value);
+        setSelectedCell({ row, col });
     }, []);
 
     const handleFormulChange = useCallback((value: string) => {
@@ -167,7 +169,7 @@ const SpreadsheetPage: React.FC = () => {
                     {saveStatus === 'error' && ' Ошибка'}
                 </div>
             </div>
-
+            <FormattingToolbar selectedCell={selectedCell} />
             <BarFormul
                 value={activeCellValue}
                 on_change={handleFormulChange}
@@ -180,7 +182,10 @@ const SpreadsheetPage: React.FC = () => {
                 cols={tableCols}
                 initialData={tableData}
                 on_data_change={handleDataChange}
-                on_cell_select={handleCellSelect}
+                on_cell_select={(row,col,value) => {
+                    setActiveCellValue(value);
+                    setSelectedCell({ row, col });
+                }}
             />
         </div>
     );

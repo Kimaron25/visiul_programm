@@ -5,6 +5,7 @@ interface User {
     id: string;
     name: string;
     email: string;
+    createdAt? : string;
 }
 
 interface AuthState {
@@ -99,7 +100,8 @@ const mockRegister = async(data: RegisterData): Promise<AuthResponse>=> {
         id: String(Date.now()),
         name: data.name,
         email: data.email,
-        password: data.password
+        password: data.password,
+        createdAt: new Date().toISOString()
     };
     users.push(newUser);
     saveMockUsers(users);
@@ -112,7 +114,8 @@ const mockRegister = async(data: RegisterData): Promise<AuthResponse>=> {
         user: {
             id: newUser.id,
             name: newUser.name,
-            email: newUser.email
+            email: newUser.email,
+            createdAt: newUser.createdAt
         }
     };
 };
@@ -134,7 +137,8 @@ const mockLogin = async(data: LoginData): Promise<AuthResponse>=> {
         user: {
             id: user.id,
             name: user.name,
-            email: user.email
+            email: user.email,
+            createdAt: user.createdAt
         }
     };
 };
@@ -200,6 +204,49 @@ export const refreshTokenThunk = createAsyncThunk(
     }
 );
 
+export const updateUserName = createAsyncThunk(
+    'auth/updateName',
+    async (newName: string, { rejectWithValue, getState }) => {
+        try {
+            await delay(500);
+            const state = getState() as any;
+            const currentUser = state.auth.user;
+            if(!currentUser) throw new Error('Пользователь не найден');
+            const users = getMockUsers();
+            const userIndex = users.findIndex((u: any) => u.id === currentUser.id);
+            if(userIndex === -1) throw new Error('Пользователь не найден');
+            users[userIndex].name = newName;
+            saveMockUsers(users);
+            return { ...currentUser, name: newName};
+        } catch (error: any) {
+            return rejectWithValue(error.message || 'Ошибка обновления имени');
+        }
+    }
+);
+
+export const updatePassword = createAsyncThunk(
+    'auth/updatePassword',
+    async({ oldPassword, newPassword } : { oldPassword: string; newPassword: string}, { rejectWithValue, getState}) => {
+        try {
+            await delay(500);
+            const state = getState() as any;
+            const currentUser = state.auth.user;
+            if(!currentUser) throw new Error('Пользователь не найден');
+            const users = getMockUsers();
+            const userIndex = users.findIndex((u: any) => u.id === currentUser.id);
+            if(userIndex === -1)throw new Error('Пользователь не найден');
+            if(users[userIndex].password !== oldPassword){
+                throw new Error('Неверный старый пароль');
+            }
+            users[userIndex].password = newPassword;
+            saveMockUsers(users);
+            return true;
+        } catch (error:any){
+            return rejectWithValue(error.message || 'Ошибка смены пароля');
+        }
+    }
+);
+
 const authSlice = createSlice({
     name: 'auth',
     initialState,
@@ -230,6 +277,8 @@ const authSlice = createSlice({
                 state.user = action.payload;
                 localStorage.setItem('spreadsheet_current_user', action.payload.id);
                 localStorage.setItem('spreadsheet_current_user_name', action.payload.name);
+                localStorage.setItem('spreadsheet_current_user_email', action.payload.email);
+                localStorage.setItem('spreadsheet_current_user_createdAt', action.payload.createdAt || '');
             })
             .addCase(loginThunk.rejected, (state,action) => {
                 state.loading = false;
@@ -244,6 +293,9 @@ const authSlice = createSlice({
                 state.isAuthenticated = true;
                 state.user = action.payload;
                 localStorage.setItem('spreadsheet_current_user', action.payload.id);
+                localStorage.setItem('spreadsheet_current_user_name', action.payload.name);
+                localStorage.setItem('spreadsheet_current_user_email', action.payload.email);
+                localStorage.setItem('spreadsheet_current_user_createdAt', action.payload.createdAt || '');
             })
             .addCase(registerThunk.rejected, (state, action) => {
                 state.loading = false;
@@ -254,6 +306,23 @@ const authSlice = createSlice({
                 state.isAuthenticated = false;
                 state.error = null;
                 localStorage.removeItem('spreadsheet_current_user');
+                localStorage.removeItem('spreadsheet_current_user_name');
+                localStorage.removeItem('spreadsheet_current_user_email');
+                localStorage.removeItem('spreadsheet_current_user_createdAt');
+                localStorage.removeItem('refreshToken');
+            })
+            .addCase(updateUserName.fulfilled, (state, action) => {
+                state.user = action.payload;
+                localStorage.setItem('spreadsheet_current_user_name', action.payload.name);
+            })
+            .addCase(updateUserName.rejected, (state, action) => {
+                state.error = action.payload as string;
+            })
+            .addCase(updatePassword.fulfilled, (state) => {
+                state.error = null;
+            })
+            .addCase(updatePassword.rejected, (state, action) => {
+                state.error = action.payload as string;
             });
     },
 });

@@ -11,7 +11,8 @@ import {
     setEditingCell, 
     setEditValue,
     clearEditing,
-    importData 
+    importData ,
+    updateCellStyle 
 } from '../../store/slices/spreadsheetSlice';
 import { setNotification } from '../../store/slices/uiSlice';
 import { undo, redo } from '../../store/slices/spreadsheetSlice';
@@ -54,10 +55,11 @@ const Spreadsheet: React.FC<SpreadSheetProps> = ({ rows = 100, cols = 26, initia
         return widths;
     });
     const [resizingColumn, setResizingColumn] = useState<{ index: number; startX: number; startWidth: number } | null>(null);
-    
+    const [rangeVersion, setRangeVersion] = useState(0);
     const [anchorCell, setAnchorCell] = useState<{ row: number; col: number } | null>(null);
     const [selectedRange, setSelectedRange] = useState<{ start: { row: number; col: number }; end: { row: number; col: number } } | null>(null);
     const [isShiftPressed, setIsShiftPressed] = useState(false);
+    const [updateKey, setUpdateKey] = useState(0);
 
     const inputRef = useRef<HTMLInputElement>(null);
     const visibleRange = useMemo(() => {
@@ -70,7 +72,7 @@ const Spreadsheet: React.FC<SpreadSheetProps> = ({ rows = 100, cols = 26, initia
             Math.ceil((scrollTop + containerHeight) /ROW_HEIGHT) + BUFFER_SIZE
         );
         return { startIndex, endIndex };
-    },[scrollTop,model.getRowCount()]);
+    },[scrollTop,model.getRowCount(), rangeVersion]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -130,18 +132,59 @@ const Spreadsheet: React.FC<SpreadSheetProps> = ({ rows = 100, cols = 26, initia
     const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             finishEditing();
-        } else if (e.key === 'Escape') {
+            if(editing_cell) {
+                const newRow = editing_cell.row + 1;
+                if(newRow < model.getRowCount()) {
+                    set_selected_cell({ row: newRow, col: editing_cell.col});
+                    startEditing(newRow, editing_cell.col, model.getCell(newRow, editing_cell.col).value);
+                }
+            }
+        } else if (e.key === 'Tab'){
+            e.preventDefault();
+            if(editing_cell) {
+                finishEditing();
+                const newCol = e.shiftKey ? editing_cell.col -1 : editing_cell.col +1;
+                if(newCol >= 0 && newCol < model.getColCount()) {
+                    set_selected_cell({row: editing_cell.row, col : newCol});
+                    startEditing(editing_cell.row,newCol , model.getCell(editing_cell.row, newCol).value);
+                }
+            } else if(selected_cell) {
+                const newCol = e.shiftKey ? selected_cell.col -1 : selected_cell.col +1;
+                if(newCol >= 0 && newCol<model.getColCount()) {
+                    set_selected_cell({row: selected_cell.row, col:newCol});
+                }
+            }
+        }else if (e.key === 'Escape') {
             set_editing_cell(null);
             set_edit_value('');
         }
-    }, [finishEditing]);
+    }, [finishEditing, editing_cell,selected_cell,model,startEditing]);
 
     const getDisplayValue = useCallback((row: number, col: number): string => {
         const cell = model.getCell(row, col);
-        if (cell.calculetade_value !== undefined && cell.calculetade_value !== '') {
-            return String(cell.calculetade_value);
-        }
-        return '';
+        const rawValue = cell.calculetade_value;
+        const style = cell.style || {};
+        if(rawValue === undefined || rawValue ==='') return '';
+        const num = Number(rawValue);
+        switch (style.format) {
+            case 'percent':
+                return `${(num * 100).toFixed(2)}%`;
+            case 'currency':
+                return `${num.toLocaleString('ru-RU')} ₽`;
+            case 'date':
+                const date = new Date(rawValue);
+                if (!isNaN(date.getTime())) {
+                    return date.toLocaleDateString('ru-RU');
+                }
+                return String(rawValue);
+            case 'number':
+                return num.toString();
+            default:
+                if (typeof rawValue === 'boolean') {
+                    return rawValue ? 'true' : 'false';
+                }
+                return String(rawValue);
+        }    
     }, [model]);
 
     const isInSelectedRange = useCallback((row: number, col: number): boolean => {
@@ -152,7 +195,7 @@ const Spreadsheet: React.FC<SpreadSheetProps> = ({ rows = 100, cols = 26, initia
         const minCol = Math.min(start.col, end.col);
         const maxCol = Math.max(start.col, end.col);
         return row >= minRow && row <= maxRow && col >= minCol && col <= maxCol;
-    }, [selectedRange]);
+    }, [selectedRange, rangeVersion]);
 
     const selectRange = useCallback((row: number, col: number, shiftPressed: boolean) => {
         if (shiftPressed && anchorCell) {
@@ -221,11 +264,114 @@ const Spreadsheet: React.FC<SpreadSheetProps> = ({ rows = 100, cols = 26, initia
                 e.preventDefault();
                 dispatch(redo());
             }
+            if((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                e.preventDefault();
+                if(selected_cell) {
+                    const cell = model.getCell(selected_cell.row, selected_cell.col);
+                    const currentStyle = cell.style || {};
+                    dispatch(updateCellStyle({
+                        row: selected_cell.row,
+                        col: selected_cell.col,
+                        style: {bold: !currentStyle.bold}
+                    }));
+                }
+            }
+            if((e.ctrlKey || e.metaKey) && e.key === 'i') {
+                e.preventDefault();
+                if(selected_cell) {
+                    const cell = model.getCell(selected_cell.row, selected_cell.col);
+                    const currentStyle = cell.style || {};
+                    dispatch(updateCellStyle({
+                        row: selected_cell.row,
+                        col: selected_cell.col,
+                        style: { italic:!currentStyle.italic}
+                    })) ;
+                }
+            }
+            if((e.ctrlKey || e.metaKey) && e.key === 'u') {
+                e.preventDefault();
+                if(selected_cell) {
+                    const cell = model.getCell(selected_cell.row,selected_cell.col);
+                    const currentStyle = cell.style || {};
+                    dispatch(updateCellStyle({
+                        row: selected_cell.row,
+                        col: selected_cell.col,
+                        style: { underline: !currentStyle.underline }
+                    }));
+                }
+            }
+            if((e.ctrlKey || e.metaKey) && e.key ==='c') {
+                e.preventDefault();
+                if(selected_cell){
+                    const cell = model.getCell(selected_cell.row, selected_cell.col);
+                    localStorage.setItem('clipboard_data', cell.value);
+                    localStorage.setItem('clipboard_style', JSON.stringify(cell.style || {}));
+                }
+            }
+            if((e.ctrlKey || e.metaKey) && e.key === 'v') {
+                e.preventDefault();
+                if(selected_cell) {
+                    const pastedValue = localStorage.getItem('clipboard_data');
+                    if(pastedValue !== null) {
+                        handleCellChange(selected_cell.row, selected_cell.col, pastedValue);
+                        const pastedStyle = localStorage.getItem('clipboard_style');
+                        if(pastedStyle) {
+                            const style = JSON.parse(pastedStyle);
+                            dispatch(updateCellStyle({
+                                row: selected_cell.row,
+                                col: selected_cell.col,
+                                style
+                            }));
+                        }
+                    }
+                }
+            }
+            if((e.ctrlKey || e.metaKey) && e.key === 'x') {
+                e.preventDefault();
+                if(selected_cell) {
+                    const cell = model.getCell(selected_cell.row, selected_cell.col);
+                    localStorage.setItem('clipboard_data',cell.value);
+                    localStorage.setItem('clipboard_style', JSON.stringify(cell.style || {}));
+                    handleCellChange(selected_cell.row, selected_cell.col, '');
+                }
+            }
+            if(e.key === 'Delete') {
+                e.preventDefault();
+                if(selected_cell) {
+                    handleCellChange(selected_cell.row, selected_cell.col, '');
+                }
+            }
+            if(e.key === 'Backspace' && document.activeElement?.tagName !== 'INPUT') {
+                e.preventDefault();
+                if(selected_cell) {
+                    handleCellChange(selected_cell.row, selected_cell.col, '');
+                }
+            }
+if((e.ctrlKey || e.metaKey) && e.key === 'a'){
+    e.preventDefault();
+    e.stopPropagation(); 
+    const maxRow = model.getRowCount() - 1;
+    const maxCol = model.getColCount() - 1;
+    
+    console.log('=== Ctrl+A pressed ===');
+    console.log('maxRow:', maxRow, 'maxCol:', maxCol);
+    console.log('selectedRange before:', selectedRange);
+    
+    setSelectedRange({
+        start: {row: 0, col: 0},
+        end: { row: maxRow, col: maxCol}
+    });
+    
+    console.log('selectedRange after:', { start: {row: 0, col: 0}, end: { row: maxRow, col: maxCol } });
+    
+    set_selected_cell({row: 0, col: 0});
+    setAnchorCell({ row: 0, col: 0 });
+    setUpdateKey(prev => prev + 1);
+}
         };
-        
         window.addEventListener('keydown', handleUndoRedo);
         return () => window.removeEventListener('keydown', handleUndoRedo);
-    }, [dispatch]);
+    }, [dispatch, selected_cell, model, refresh]);
 
     const handleContextMenu = useCallback((e: React.MouseEvent, row: number, col: number) => {
         e.preventDefault();
@@ -332,13 +478,26 @@ const Spreadsheet: React.FC<SpreadSheetProps> = ({ rows = 100, cols = 26, initia
                 const width = columnWidths[col]||100;
                 const isInRange = isInSelectedRange(row, col);
                 const isRangeCell = isInRange && !isSelect;
+                const cell = model.getCell(row, col);
+                const cellStyle = cell.style || {};
+                const cellDivStyle: React.CSSProperties = {
+                    width: `${width}px`,
+                    minWidth: `${width}px`,
+                    height: ROW_HEIGHT,
+                    fontWeight: cellStyle.bold ? 'bold' : 'normal',
+                    fontStyle: cellStyle.italic ? 'italic' : 'normal',
+                    textDecoration: cellStyle.underline ? 'underline' : 'none',
+                    textAlign: cellStyle.align || 'left',
+                    color: cellStyle.textColor || '#000000',
+                    backgroundColor: cellStyle.backgroundColor || 'transparent',  
+                };
                 cells.push(
                     <div
-                        key={`cell-${row}-${col}`}
+                        key={`cell-${row}-${col}-${updateKey}`}
                         className={`spreadsheet-cell 
                             ${isSelect ? 'selected' : ''} 
                             ${isRangeCell ? 'range-selected' : ''}`}
-                        style={{ width: `${width}px`, minWidth: `${width}px`, height: ROW_HEIGHT }}
+                        style={cellDivStyle}
                         onClick={() => {
                             selectRange(row, col, isShiftPressed);
                             if (on_cell_select) {

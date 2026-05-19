@@ -7,6 +7,16 @@ interface HistoryState {
     present: TableData |null;
     future: TableData[];
 }
+
+export interface CellStyle {
+    bold?: boolean;
+    italic?: boolean;
+    underline?: boolean;
+    textColor?: string;
+    backgroundColor?: string;
+    align?: 'left' | 'center' | 'right';
+    format?: 'number' | 'percent' | 'currency' | 'date';
+}
 interface SpreadsheetState {
     data: TableData;
     rows: number;
@@ -49,13 +59,31 @@ const spreadsheetSlice = createSlice({
             state.history.future = [];
             state.data = action.payload;
         },
-        setCellValue: (state, action: PayloadAction<{row: number; col: number; value: string; computedValue:any}>) => {
-            const { row, col, value, computedValue } = action.payload;
+        setCellValue: (state, action: PayloadAction<{row: number; col: number; value: string; computedValue:any; style?: CellStyle;}>) => {
+            const { row, col, value, computedValue,style } = action.payload;
             const key = `${row}:${col}`;
             if(state.history.present) {
                 state.history.past.push(state.history.present);
             }
-            state.data[key] = { value, calculetade_value: computedValue };
+            const existingCell = state.data[key];
+            state.data[key] = { value, calculetade_value: computedValue , style: style || existingCell?.style};
+            state.history.present = {...state.data};
+            state.history.future = [];
+        },
+
+        updateCellStyle: (state, action: PayloadAction<{row: number; col: number; style: Partial<CellStyle>;}>) => {
+            const { row, col, style} = action.payload;
+            const key = `${row}:${col}`;
+            if(!state.data[key]) {
+                state.data[key] = { value: '', calculetade_value: '' };
+            }
+            state.data[key].style = {
+                ...state.data[key].style,
+                ...style
+            };
+            if(state.history.present) {
+                state.history.past.push(state.history.present);
+            }
             state.history.present = {...state.data};
             state.history.future = [];
         },
@@ -120,6 +148,7 @@ export const {
     undo,
     redo,
     saveToHistory,
+    updateCellStyle,
 } = spreadsheetSlice.actions;
 
 export default spreadsheetSlice.reducer;

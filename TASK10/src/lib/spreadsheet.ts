@@ -1,8 +1,10 @@
+import type { CellStyle } from '../store/slices/spreadsheetSlice';
 import { culculateFormula } from './parserFormul';  
 
 export interface Cell {
     value: string;
     calculetade_value: any;
+    style?: CellStyle;
 }
 
 export type TableData = Record<string, Cell>;
@@ -184,5 +186,27 @@ export class SpreadSheet {
 
     getRawValue(row: number, col: number): string {
         return this.getCell(row, col).value;
+    }
+
+    formatValue(value: any, format?: 'number' | 'percent' | 'currency' | 'date'):string {
+        if(value === undefined || value === '') return '';
+        const num = Number(value);
+        switch(format) {
+        case 'percent':
+            return `${(num * 100).toFixed(2)}%`;
+        case 'currency':
+            return `${num.toLocaleString('ru-RU')} ₽`;
+        case 'date':
+            if (value instanceof Date) {
+                return value.toLocaleDateString('ru-RU');
+            }
+            const date = new Date(value);
+            if (!isNaN(date.getTime())) {
+                return date.toLocaleDateString('ru-RU');
+            }
+            return String(value);
+        default:
+            return String(value);
+        }
     }
 }

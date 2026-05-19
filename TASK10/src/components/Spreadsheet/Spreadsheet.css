@@ -86,11 +86,6 @@
   flex-shrink: 0;
 }
 
-.spreadsheet-cell.selected {
-  border: 2px solid #4263eb;
-  background: #e7f5ff;
-}
-
 .spreadsheet-cell-content {
   padding: 4px 8px;
   font-size: 14px;
@@ -127,13 +122,13 @@
   background: rgba(0, 0, 0, 0.2);
 }
 
-.spreadsheet-cell.range-selected {
-  background-color: rgba(66, 99, 235, 0.15);
-}
-
 .spreadsheet-cell.selected {
   background-color: rgba(66, 99, 235, 0.3);
   border: 2px solid #4263eb;
+}
+
+.spreadsheet-cell.range-selected {
+  background-color: rgba(66, 99, 235, 0.5) !important;
 }
 
 .spreadsheet-cell.selected.range-selected {
